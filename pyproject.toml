@@ -29,6 +29,7 @@ dev = [
     "httpx>=0.27",
     "jupyterlab>=4.0",
     "ipykernel>=6.29",
+    "jupytext>=1.19.2",
 ]
 ml = [
     "matplotlib>=3.9",
