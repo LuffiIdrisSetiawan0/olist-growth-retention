@@ -1,0 +1,21 @@
+# Copy to profiles.yml and adjust the `project:` to your own GCP project ID.
+# profiles.yml is gitignored. Run `dbt debug --profiles-dir dbt/olist_warehouse` to verify.
+
+olist_warehouse:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: oauth          # uses ADC from `gcloud auth application-default login`
+      project: your-gcp-project-id
+      dataset: ecom_staging
+      location: US
+      threads: 4
+      timeout_seconds: 300
+      priority: interactive
+      maximum_bytes_billed: 1000000000
+    ci:
+      type: duckdb
+      path: target/ci.duckdb
+      threads: 4
+      schema: main

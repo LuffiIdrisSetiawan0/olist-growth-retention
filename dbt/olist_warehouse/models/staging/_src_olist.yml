@@ -1,0 +1,28 @@
+version: 2
+
+sources:
+  - name: olist_raw
+    database: portofolio-data-496205
+    schema: ecom_raw
+    description: "Raw CSVs from the Olist Brazilian E-Commerce Kaggle dataset (2016-2018), loaded as-is by scripts/ingest_olist.py."
+    loader: kaggle-cli
+
+    tables:
+      - name: customers
+        description: "99,441 rows. customer_id is per-order; customer_unique_id is the actual person."
+      - name: orders
+        description: "99,441 rows. One order per customer_id."
+      - name: order_items
+        description: "112,650 rows. Multiple items per order possible."
+      - name: order_payments
+        description: "103,886 rows. Multiple payment methods/installments per order possible."
+      - name: order_reviews
+        description: "99,224 rows. Reviews in Portuguese."
+      - name: products
+        description: "32,951 rows. Categories in Portuguese; translated via product_category_translation."
+      - name: sellers
+        description: "3,095 rows."
+      - name: geolocation
+        description: "1,000,163 rows. Multiple coords per zip_code_prefix, deduped in staging."
+      - name: product_category_translation
+        description: "71 rows. Maps PT category names to EN. Columns auto-named string_field_0/1 by BQ; renamed in staging."

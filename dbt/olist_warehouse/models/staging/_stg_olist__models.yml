@@ -1,0 +1,139 @@
+version: 2
+
+models:
+  - name: stg_olist__customers
+    description: "Cleaned customer master. Note: customer_id is per-order; use customer_unique_id for cohort/RFM analysis."
+    columns:
+      - name: customer_id
+        description: "Per-order customer key — NOT the actual person."
+        tests: [unique, not_null]
+      - name: customer_unique_id
+        description: "Stable identifier per real customer; multiple customer_id values can share one customer_unique_id."
+        tests: [not_null]
+      - name: zip_code_prefix
+        tests: [not_null]
+      - name: state
+
+  - name: stg_olist__orders
+    description: "One row per order with delivery timing and lateness flag."
+    columns:
+      - name: order_id
+        tests: [unique, not_null]
+      - name: customer_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_olist__customers')
+                field: customer_id
+      - name: status
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['created','approved','invoiced','processing','shipped','delivered','unavailable','canceled']
+      - name: purchased_at
+        tests: [not_null]
+      - name: was_late
+        description: "True if delivered_customer_at > estimated_delivery_at."
+
+  - name: stg_olist__order_items
+    description: "Line items per order."
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [order_id, order_item_id]
+    columns:
+      - name: order_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_olist__orders')
+                field: order_id
+      - name: product_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_olist__products')
+                field: product_id
+      - name: seller_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('stg_olist__sellers')
+                field: seller_id
+      - name: price
+        tests: [not_null]
+      - name: line_total
+        description: "price + freight_value."
+
+  - name: stg_olist__order_payments
+    description: "Payment installments per order (one order can have multiple payment lines)."
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [order_id, payment_sequential]
+    columns:
+      - name: order_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_olist__orders')
+                field: order_id
+      - name: payment_type
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['credit_card','boleto','voucher','debit_card','not_defined']
+
+  - name: stg_olist__order_reviews
+    description: "Customer reviews. Rare duplicate review_id values exist due to source data quirks (warned, not failed)."
+    columns:
+      - name: review_id
+        tests:
+          - unique:
+              config:
+                severity: warn
+          - not_null
+      - name: order_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_olist__orders')
+                field: order_id
+      - name: score
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4, 5]
+                quote: false
+
+  - name: stg_olist__products
+    description: "Product master with PT category name."
+    columns:
+      - name: product_id
+        tests: [unique, not_null]
+
+  - name: stg_olist__sellers
+    description: "Seller master."
+    columns:
+      - name: seller_id
+        tests: [unique, not_null]
+
+  - name: stg_olist__geolocation
+    description: "Deduplicated geolocation per zip_code_prefix (avg lat/lng)."
+    columns:
+      - name: zip_code_prefix
+        tests: [unique, not_null]
+
+  - name: stg_olist__product_category_translation
+    description: "PT -> EN category name mapping. Source columns renamed from string_field_0/1."
+    columns:
+      - name: category_name_pt
+        tests: [unique, not_null]
+      - name: category_name_en
+        tests: [not_null]

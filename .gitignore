@@ -1,0 +1,80 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# uv
+.uv/
+
+# dbt
+dbt/**/target/
+dbt/**/dbt_packages/
+dbt/**/logs/
+dbt/**/.user.yml
+profiles.yml
+!profiles.example.yml
+
+# Data — keep raw out of git
+data/raw/
+data/processed/
+data/exports/
+*.csv
+*.parquet
+*.duckdb
+*.db
+!dbt/**/seeds/*.csv
+
+# Tableau
+*.twbx
+*.tde
+*.hyper
+
+# Secrets and credentials
+.env
+.env.*
+!.env.example
+*.json
+!package.json
+!package-lock.json
+!tsconfig*.json
+!**/dbt_project.yml
+service-account*.json
+gcp-credentials*.json
+
+# Node (for Fase 3)
+node_modules/
+dist/
+build/
+.vite/
+*.log
+
+# Docker (for Fase 3)
+.dockerignore.local
+
+# Hugging Face
+.huggingface/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Claude Code
+.claude/

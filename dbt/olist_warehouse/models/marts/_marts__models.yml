@@ -1,0 +1,101 @@
+version: 2
+
+models:
+  - name: dim_customers
+    description: "Customer dimension keyed by customer_unique_id (the actual person)."
+    columns:
+      - name: customer_unique_id
+        tests: [unique, not_null]
+      - name: total_orders
+        tests: [not_null]
+      - name: is_repeat_buyer
+        description: "True if total_orders > 1."
+
+  - name: dim_products
+    description: "Product dimension with English category translation."
+    columns:
+      - name: product_id
+        tests: [unique, not_null]
+      - name: category
+        tests: [not_null]
+
+  - name: fct_orders
+    description: "Order fact table joined to customer_unique_id and item/payment/review aggregates."
+    columns:
+      - name: order_id
+        tests: [unique, not_null]
+      - name: customer_unique_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_unique_id
+      - name: status
+        tests: [not_null]
+      - name: purchased_at
+        tests: [not_null]
+
+  - name: monthly_revenue
+    description: "Month-level KPIs for the executive overview dashboard."
+    columns:
+      - name: month
+        tests: [unique, not_null]
+      - name: orders
+        tests: [not_null]
+      - name: gross_revenue
+        tests: [not_null]
+
+  - name: customer_rfm
+    description: "RFM scores and segment label per customer_unique_id."
+    columns:
+      - name: customer_unique_id
+        tests: [unique, not_null]
+      - name: r_score
+        tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4, 5]
+                quote: false
+      - name: f_score
+        tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4, 5]
+                quote: false
+      - name: m_score
+        tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4, 5]
+                quote: false
+      - name: rfm_segment_label
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['Champions','Loyal','New','At Risk','Lost','Other']
+
+  - name: customer_cohorts
+    description: "Cohort retention matrix: rows are (cohort_month, months_since_first), each with active_customers + retention_rate."
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [cohort_month, months_since_first]
+    columns:
+      - name: cohort_month
+        tests: [not_null]
+      - name: months_since_first
+        tests: [not_null]
+      - name: retention_rate
+
+  - name: revenue_by_state
+    description: "Revenue and customer aggregates per customer_state."
+    columns:
+      - name: state
+        tests: [unique, not_null]
+
+  - name: category_performance
+    description: "Category × month revenue and order volume."
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [category, month]
