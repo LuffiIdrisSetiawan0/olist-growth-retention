@@ -44,13 +44,12 @@ data/exports/
 .env
 .env.*
 !.env.example
-*.json
-!package.json
-!package-lock.json
-!tsconfig*.json
-!**/dbt_project.yml
 service-account*.json
 gcp-credentials*.json
+kaggle.json
+credentials.json
+secrets*.json
+*-credentials.json
 
 # Node (for Fase 3)
 node_modules/

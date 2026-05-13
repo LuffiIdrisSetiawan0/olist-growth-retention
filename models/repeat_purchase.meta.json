@@ -1,0 +1,51 @@
+{
+  "horizon_days": 180,
+  "target_column": "repeat_within_180d",
+  "numeric_features": [
+    "delivery_days",
+    "was_late",
+    "avg_review_score",
+    "item_count",
+    "unique_products",
+    "unique_sellers",
+    "items_subtotal",
+    "freight_total",
+    "items_total",
+    "max_installments",
+    "payment_count",
+    "payments_total",
+    "first_order_month"
+  ],
+  "categorical_features": [
+    "customer_state"
+  ],
+  "train_end": "2018-01-01",
+  "eval_end": "2018-04-20",
+  "train_size": 44034,
+  "test_size": 24760,
+  "metrics_test": {
+    "logreg": {
+      "n_samples": 24760,
+      "n_positives": 702,
+      "base_rate": 0.028352180936995153,
+      "roc_auc": 0.5719764604958719,
+      "pr_auc": 0.039363022371607756,
+      "brier": 0.2624565829475741,
+      "recall_top_10pct": 0.1752136752136752,
+      "recall_top_20pct": 0.292022792022792,
+      "lift_top_10pct": 1.7521367521367521
+    },
+    "boost": {
+      "n_samples": 24760,
+      "n_positives": 702,
+      "base_rate": 0.028352180936995153,
+      "roc_auc": 0.5400548508246572,
+      "pr_auc": 0.03577294317586175,
+      "brier": 0.2319462545417876,
+      "recall_top_10pct": 0.16524216524216523,
+      "recall_top_20pct": 0.25783475783475784,
+      "lift_top_10pct": 1.6524216524216524
+    }
+  },
+  "default_model": "logreg"
+}

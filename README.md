@@ -8,8 +8,8 @@ Runs **fully on free tiers** — no billing account required anywhere.
 
 | Phase | Scope | Status |
 | --- | --- | --- |
-| **Fase 1** | Ingest → dbt → Tableau Public dashboard | dbt pipeline complete; dashboard pending |
-| Fase 2 | RFM + KMeans + repeat-purchase model | not started |
+| Fase 1 | Ingest → dbt → Tableau Public dashboard | dbt pipeline complete; dashboard authoring pending |
+| **Fase 2** | RFM + KMeans + repeat-purchase model | notebooks + saved model |
 | Fase 3 | FastAPI + React on Hugging Face Spaces | not started |
 
 ## Stack
@@ -163,10 +163,43 @@ uv run dbt parse --project-dir dbt/olist_warehouse --profiles-dir dbt/olist_ware
 - BigQuery Sandbox tables expire after 60 days by default. Re-run `uv run python scripts/ingest_olist.py` and `uv run dbt build` to refresh.
 - Tableau Public hosts dashboards publicly and does not support live BigQuery connections on free accounts — that's why we export CSV snapshots instead.
 
+## Fase 2 results
+
+Three notebooks in [`notebooks/`](notebooks/), written as `.py` with `# %%` cell markers (open in VS Code Jupyter or JupyterLab via jupytext):
+
+- [`01_eda.py`](notebooks/01_eda.py) — repeat-rate validation, cohort right-censoring, RFM segment distribution, geographic and delivery-time distributions.
+- [`02_segmentation.py`](notebooks/02_segmentation.py) — KMeans on log-transformed RFM, k chosen by elbow + silhouette (`k = 4`), cluster profiles, cross-tab vs rule-based labels.
+- [`03_repeat_purchase.py`](notebooks/03_repeat_purchase.py) — propensity model with chronological split, two model comparison, PR/calibration curves, permutation importance, pickled artifacts.
+
+**Propensity model — test set (24,760 customers, 2.84% base rate):**
+
+| Metric | Logistic Regression | HistGradientBoosting |
+| --- | --- | --- |
+| PR-AUC | **0.0394** | 0.0358 |
+| Recall @ top-10% | **17.5%** | 16.5% |
+| Lift @ top-10% | **1.75×** | 1.65× |
+| ROC-AUC | 0.572 | 0.540 |
+| Brier score | 0.262 | **0.232** |
+
+**Honest read.** With ~3% positive class, the linear baseline edges out the boosted model on ranking metrics — `class_weight='balanced'` on HGBT trades calibration for recall in a way that hurts precision in the top decile. Top features by permutation importance: `max_installments`, `unique_products`, `payments_total`. `delivery_days`, `was_late`, and `customer_state` did not provide useful signal in this configuration.
+
+Both models are saved as pickles under [`models/`](models/) along with `repeat_purchase.meta.json` (training metadata + metrics). `default_model = "logreg"` reflects the PR-AUC winner.
+
+KMeans clusters (saved to `data/exports/customer_clusters.csv`):
+
+| Cluster | n | mean recency | mean frequency | mean monetary | description |
+| --- | --- | --- | --- | --- | --- |
+| C0 | 28,387 | 180d | 1.00 | 318.72 | Recent high-value first-timers |
+| C1 | 2,888 | 227d | 2.11 | 308.26 | Repeat buyers — target for retention |
+| C2 | 27,450 | 432d | 1.00 | 119.92 | Old single buyers — lost / at risk |
+| C3 | 36,258 | 154d | 1.00 | 69.12 | Recent low-value first-timers |
+
+Figures: [`reports/figures/`](reports/figures/) holds all 11 PNGs referenced by the notebooks (cohort heatmap, RFM segments, KMeans elbow + 2D scatter, train/test split, PR curves, calibration, permutation importance).
+
 ## Roadmap
 
 - [x] **Fase 1 — DA piece.** Ingest Olist → dbt staging + marts → CSV exports → CI. *(Tableau dashboard authoring is the remaining manual step.)*
-- [ ] **Fase 2 — DS layer.** RFM + KMeans segmentation, repeat-purchase propensity model, methodology notebook.
+- [x] **Fase 2 — DS layer.** EDA, RFM + KMeans segmentation, repeat-purchase propensity model with chronological split, comparison + calibration + permutation importance.
 - [ ] **Fase 3 — Engineering layer.** FastAPI + React demo, Docker container, deploy to Hugging Face Spaces.
 
 ## License
