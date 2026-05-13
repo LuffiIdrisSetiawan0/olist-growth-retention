@@ -63,7 +63,7 @@ def first_order_features(fct_orders: pd.DataFrame) -> pd.DataFrame:
     if out["first_order_at"].dt.tz is not None:
         out["first_order_at"] = out["first_order_at"].dt.tz_localize(None)
     out["first_order_month"] = out["first_order_at"].dt.month
-    out["was_late"] = (out["was_late"] == True).astype(int)  # noqa: E712 — pandas Series eq with NaN
+    out["was_late"] = out["was_late"].eq(True).astype(int)
     return out
 
 
